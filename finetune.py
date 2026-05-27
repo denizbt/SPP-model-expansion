@@ -2,6 +2,8 @@ import os
 import sys
 from typing import List
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "peft", "src"))
+
 import fire
 import torch
 import transformers
@@ -19,12 +21,10 @@ from peft import (
     get_peft_model_state_dict,
     set_peft_model_state_dict,
 )
-from transformers import LlamaForCausalLM, LlamaTokenizer, set_seed
+from transformers import LlamaForCausalLM, AutoTokenizer, set_seed
 
 
 from utils.prompter import Prompter
-os.environ['SSL_CERT_DIR'] = '/etc/ssl/certs'
-os.environ['REQUESTS_CA_BUNDLE'] = '/etc/ssl/certs/ca-certificates.crt'
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from os.path import exists, join, isdir
 
@@ -151,15 +151,15 @@ def train(
     model = LlamaForCausalLM.from_pretrained(
         base_model,
         # load_in_8bit=True,
-        torch_dtype=torch.float16,
+        torch_dtype=torch.bfloat16,
         device_map=device_map,
     )
 
-    tokenizer = LlamaTokenizer.from_pretrained(base_model)
+    tokenizer = AutoTokenizer.from_pretrained(base_model)
 
-    tokenizer.pad_token_id = (
-        0  # unk. we want this to be different from the eos token
-    )
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token_id = tokenizer.eos_token_id
     tokenizer.padding_side = "left"  # Allow batched inference
 
     def tokenize(prompt, add_eos_token=True):
@@ -277,7 +277,7 @@ def train(
             weight_decay=0.001,
             num_train_epochs=num_epochs,
             learning_rate=learning_rate,
-            fp16=True,
+            bf16=True,
             logging_steps=10,
             optim="adamw_torch",
             evaluation_strategy="steps" if val_set_size > 0 else "no",

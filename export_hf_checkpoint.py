@@ -1,19 +1,22 @@
 import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "peft", "src"))
 
 import torch
 import transformers
 from peft import PeftModel
-from transformers import LlamaForCausalLM, LlamaTokenizer, set_seed
+from transformers import LlamaForCausalLM, AutoTokenizer, set_seed
 
 set_seed(42)
-BASE_MODEL = "/path/to/wanda-llama-7b-2:4" # os.environ.get("BASE_MODEL", None)
-ckpt_path = "/path/to/output/wanda-7b-2:4-spp"
+BASE_MODEL = "/path/to/meta-llama/Meta-Llama-3.1-8B"  # os.environ.get("BASE_MODEL", None)
+ckpt_path = "/path/to/output/llama3-8b-spp"
 ckpt_name = ckpt_path.split("/")[-1]
 assert (
     BASE_MODEL
 ), "Please specify a value for BASE_MODEL environment variable, e.g. `export BASE_MODEL=huggyllama/llama-7b`"  # noqa: E501
 
-tokenizer = LlamaTokenizer.from_pretrained(BASE_MODEL)
+tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
 
 base_model = LlamaForCausalLM.from_pretrained(
     BASE_MODEL,

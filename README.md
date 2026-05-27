@@ -1,5 +1,65 @@
 # SPP: Sparsity-Preserved Parameter-Efficient Fine-Tuning for Large Language Models
 
+## Llama3 Porting Notes
+
+The original code targeted the LLaMA and LLaMA 2 families (7B/30B) with `transformers==4.28` and `PEFT==0.2.0`. The following changes were made to support Llama3 (8B / 70B) models.
+
+### Changes
+
+**`finetune.py`** (targets 8B):
+- `LlamaTokenizer` → `AutoTokenizer` — Llama3 uses a tiktoken-based fast tokenizer not accessible via the legacy class
+- `pad_token_id = 0` → `pad_token = eos_token` — token ID 0 is not the unknown token in Llama3's vocabulary
+- `torch_dtype=torch.float16` + `fp16=True` → `torch.bfloat16` + `bf16=True` — Llama3 was pretrained in bfloat16; fp16 causes gradient instability
+
+**`finetune_deepspeed.py`** (targets 70B):
+- `LlamaTokenizer` → `AutoTokenizer`
+- `pad_token_id = 0` → `pad_token = eos_token`
+- Removed unused `import ipdb`
+
+**`export_hf_checkpoint.py`**:
+- `LlamaTokenizer` → `AutoTokenizer`
+- Placeholder paths updated to Llama3 model names
+
+**`convert_ckpt.py`**:
+- Placeholder model name updated to Llama3
+- Added `weights_only=True` to `torch.load` (required by PyTorch 2.x)
+
+### What was NOT changed
+- The bundled `peft/` library (v0.2.0) is kept as-is to preserve the SPP `DiagonalLinear` modification
+- Prompt format remains Alpaca-style (`### Instruction:` / `### Response:`)
+- LoRA target modules are unchanged — Llama3 uses the same module names (`q_proj`, `v_proj`, `k_proj`, `o_proj`, `gate_proj`, `up_proj`, `down_proj`)
+
+### Installation for Llama3
+
+```bash
+pip install "transformers>=4.40" datasets fire
+cd peft && pip install -e . && cd ..
+```
+
+### Example commands
+
+**8B model:**
+```bash
+torchrun --nproc_per_node=8 --master_port=20009 finetune.py \
+    --base_model '/path/to/meta-llama/Meta-Llama-3.1-8B' \
+    --data_path './alpaca_data_gpt4.json' \
+    --output_dir '/path/to/output/llama3-8b-spp' \
+    --batch_size 128 --cutoff_len 512 --micro_batch_size 8 --num_epochs 3
+```
+
+**70B model (DeepSpeed):**
+```bash
+torchrun --nnodes 1 --nproc_per_node 8 --master_port=20009 finetune_deepspeed.py \
+    --base_model '/path/to/meta-llama/Meta-Llama-3.1-70B' \
+    --data_path './alpaca_data_gpt4.json' \
+    --output_dir '/path/to/output/llama3-70b-spp' \
+    --batch_size 256 --cutoff_len 512 --micro_batch_size 16 --num_epochs 3
+```
+
+---
+
+
+
 Pytorch implementation of the SPP methods as presented in:
 
 **SPP: Sparsity-Preserved Parameter-Efficient Fine-Tuning for Large Language Models (ICML 2024)**</br>

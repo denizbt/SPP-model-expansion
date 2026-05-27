@@ -1,7 +1,7 @@
 import torch
 import json
 import os
-model_name = "wanda-30b-2:4-spp"
+model_name = "llama3-70b-spp"
 dir = "/path/to/output/{}/{}/".format(model_name, model_name)
 os.makedirs(dir, exist_ok=True)
 
@@ -30,7 +30,7 @@ adapter_config = {
     "task_type": "CAUSAL_LM"
 }
 json.dump(adapter_config, open("{}/adapter_config.json".format(dir), "w"))
-ckpt_full = torch.load("/path/to/output/{}/checkpoint-final/pytorch_model.bin".format(model_name), map_location="cpu")
+ckpt_full = torch.load("/path/to/output/{}/checkpoint-final/pytorch_model.bin".format(model_name), map_location="cpu", weights_only=True)
 ckpt = {}
 
 for key in ckpt_full.keys():
