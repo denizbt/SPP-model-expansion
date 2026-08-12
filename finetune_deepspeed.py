@@ -23,7 +23,7 @@ from peft import (
     set_peft_model_state_dict,
 )
 
-from transformers import LlamaForCausalLM, AutoTokenizer, set_seed
+from transformers import AutoModelForCausalLM, AutoTokenizer, set_seed
 
 from utils.prompter import Prompter
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
@@ -150,7 +150,7 @@ def train(
                 gradient_checkpointing=gradient_checkpointing,
             )
     
-    model = LlamaForCausalLM.from_pretrained(
+    model = AutoModelForCausalLM.from_pretrained(
         base_model,
         torch_dtype=torch.float16,
         use_cache=False if gradient_checkpointing else True,  # this is needed for gradient checkpointing

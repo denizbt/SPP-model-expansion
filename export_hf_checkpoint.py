@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "pef
 import torch
 import transformers
 from peft import PeftModel
-from transformers import LlamaForCausalLM, AutoTokenizer, set_seed
+from transformers import AutoModelForCausalLM, AutoTokenizer, set_seed
 
 set_seed(42)
 BASE_MODEL = "/path/to/meta-llama/Meta-Llama-3.1-8B"  # os.environ.get("BASE_MODEL", None)
@@ -18,7 +18,7 @@ assert (
 
 tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
 
-base_model = LlamaForCausalLM.from_pretrained(
+base_model = AutoModelForCausalLM.from_pretrained(
     BASE_MODEL,
     load_in_8bit=False,
     torch_dtype=torch.float16,
@@ -56,7 +56,7 @@ deloreanized_sd = {
     if "lora" not in k
 }
 
-LlamaForCausalLM.save_pretrained(
-    base_model, "./output_models/{}".format(ckpt_name), state_dict=deloreanized_sd, max_shard_size="20GB"
+base_model.save_pretrained(
+    "./output_models/{}".format(ckpt_name), state_dict=deloreanized_sd, max_shard_size="20GB"
 )
 tokenizer.save_pretrained("./output_models/{}".format(ckpt_name))

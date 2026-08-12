@@ -1,8 +1,8 @@
 # SPP: Sparsity-Preserved Parameter-Efficient Fine-Tuning for Large Language Models
 
-## Llama3 Porting Notes
+## Model Expansion Notes
 
-The original code targeted the LLaMA and LLaMA 2 families (7B/30B) with `transformers==4.28` and `PEFT==0.2.0`. The following changes were made to support Llama3 (8B / 70B) models.
+The original code targeted the LLaMA and LLaMA 2 families (7B/30B) with `transformers==4.28` and `PEFT==0.2.0`. The following changes were made to support Llama3 (8B / 70B), Mistral and Qwen models.
 
 ### Changes
 
@@ -18,18 +18,17 @@ The original code targeted the LLaMA and LLaMA 2 families (7B/30B) with `transfo
 
 **`export_hf_checkpoint.py`**:
 - `LlamaTokenizer` → `AutoTokenizer`
-- Placeholder paths updated to Llama3 model names
+- Placeholder paths updated to auto model names
 
 **`convert_ckpt.py`**:
-- Placeholder model name updated to Llama3
 - Added `weights_only=True` to `torch.load` (required by PyTorch 2.x)
 
 ### What was NOT changed
 - The bundled `peft/` library (v0.2.0) is kept as-is to preserve the SPP `DiagonalLinear` modification
 - Prompt format remains Alpaca-style (`### Instruction:` / `### Response:`)
-- LoRA target modules are unchanged — Llama3 uses the same module names (`q_proj`, `v_proj`, `k_proj`, `o_proj`, `gate_proj`, `up_proj`, `down_proj`)
+- LoRA target modules are unchanged because Llama3 uses the same module names (`q_proj`, `v_proj`, `k_proj`, `o_proj`, `gate_proj`, `up_proj`, `down_proj`)
 
-### Installation for Llama3
+### Installation
 
 ```bash
 pip install "transformers>=4.40" datasets fire
@@ -41,7 +40,7 @@ cd peft && pip install -e . && cd ..
 **8B model:**
 ```bash
 torchrun --nproc_per_node=8 --master_port=20009 finetune.py \
-    --base_model '/path/to/meta-llama/Meta-Llama-3.1-8B' \
+    --base_model '/path/to/sparsified_model_weights/' \
     --data_path './alpaca_data_gpt4.json' \
     --output_dir '/path/to/output/llama3-8b-spp' \
     --batch_size 128 --cutoff_len 512 --micro_batch_size 8 --num_epochs 3
@@ -50,7 +49,7 @@ torchrun --nproc_per_node=8 --master_port=20009 finetune.py \
 **70B model (DeepSpeed):**
 ```bash
 torchrun --nnodes 1 --nproc_per_node 8 --master_port=20009 finetune_deepspeed.py \
-    --base_model '/path/to/meta-llama/Meta-Llama-3.1-70B' \
+    --base_model '/path/to/sparsified_model_weights/' \
     --data_path './alpaca_data_gpt4.json' \
     --output_dir '/path/to/output/llama3-70b-spp' \
     --batch_size 256 --cutoff_len 512 --micro_batch_size 16 --num_epochs 3

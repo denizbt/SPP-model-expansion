@@ -312,7 +312,8 @@ class Linear(nn.Linear, LoraLayer):
         self.fan_in_fan_out = fan_in_fan_out
         # Actual trainable parameters
         if r > 0:
-            self.lora_A = DiagonalLinear(in_features, out_features, r=16)
+            # NOTE original code had hard-coded DiagonalLinear(..., r=16).
+            self.lora_A = DiagonalLinear(in_features, out_features, r=self.r)
             self.scaling = self.lora_alpha / self.r
             # Freezing the pre-trained weight matrix
             self.weight.requires_grad = False

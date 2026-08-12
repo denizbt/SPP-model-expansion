@@ -164,3 +164,4 @@ output_models/*
 output/*
 wandb/*
 *.sh
+.vscode/
