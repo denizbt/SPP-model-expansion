@@ -1,0 +1,14 @@
+# Transformers 5 requires a newer PEFT API than the vendored PEFT 0.2.0.
+transformers==4.40.2
+torch>=2.1
+datasets>=2.0
+accelerate>=0.18
+fire>=0.5
+
+# Required by peft/src/peft/tuners/lora.py, although only imported.
+ipdb>=0.13
+
+# Install this repository's modified PEFT implementation.
+-e ./peft
+
+# DeepSpeed is intentionally omitted. Install it separately in a Linux/CUDA environment when using finetune_deepspeed.py.

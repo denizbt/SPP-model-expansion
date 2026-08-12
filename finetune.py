@@ -148,10 +148,12 @@ def train(
     if len(wandb_log_model) > 0:
         os.environ["WANDB_LOG_MODEL"] = wandb_log_model
 
+    use_bf16 = torch.cuda.is_available()
+
     model = AutoModelForCausalLM.from_pretrained(
         base_model,
         # load_in_8bit=True,
-        torch_dtype=torch.bfloat16,
+        torch_dtype=torch.bfloat16 if use_bf16 else torch.float32,
         device_map=device_map,
     )
 
@@ -277,7 +279,7 @@ def train(
             weight_decay=0.001,
             num_train_epochs=num_epochs,
             learning_rate=learning_rate,
-            bf16=True,
+            bf16=use_bf16,
             logging_steps=10,
             optim="adamw_torch",
             evaluation_strategy="steps" if val_set_size > 0 else "no",
